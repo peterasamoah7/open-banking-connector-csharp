@@ -8,20 +8,20 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace FinnovationLabs.OpenBanking.Library.Connector.Security
+namespace FinnovationLabs.OpenBanking.Library.Connector.Persistence
 {
     public interface IDbEntityRepository<TEntity>
     {
-        Task<TEntity> GetAsync(string id);
+        ValueTask<TEntity> GetAsync(string id);
 
         Task<IQueryable<TEntity>> GetAsync(Expression<Func<TEntity, bool>> predicate);
 
-        Task<TEntity> SetAsync(TEntity profile);
+        Task<TEntity> SetAsync(TEntity instance);
 
         Task SaveChangesAsync();
 
-        Task<bool> DeleteAsync(string id);
+        Task DeleteAsync(TEntity instance);
 
-        Task<IList<string>> GetIdsAsync();
+        Task<List<string>> GetIdsAsync();
     }
 }

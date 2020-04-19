@@ -8,8 +8,9 @@ using FinnovationLabs.OpenBanking.Library.Connector.Instrumentation;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent.PaymentInitiation;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Mapping;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent;
+using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent.PaymentInitiation;
+using FinnovationLabs.OpenBanking.Library.Connector.Persistence;
 using FinnovationLabs.OpenBanking.Library.Connector.Security;
-using FinnovationLabs.OpenBanking.Library.Connector.Security.PaymentInitiation;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
 {
@@ -17,11 +18,11 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
     {
         private readonly IApiClient _apiClient;
         private readonly BaseDbContext _baseDbContext;
-        private readonly IApiProfileRepository _apiProfileRepository;
+        private readonly IDbEntityRepository<ApiProfile> _apiProfileRepository;
         private readonly ICertificateReader _certificateReader;
-        private readonly IOpenBankingClientProfileRepository _clientProfileRepository;
+        private readonly IDbEntityRepository<BankClientProfile> _clientProfileRepository;
         private readonly IConfigurationProvider _configurationProvider;
-        private readonly IDomesticConsentRepository _domesticConsentRepo;
+        private readonly IDbEntityRepository<DomesticConsent> _domesticConsentRepo;
         private readonly IEntityMapper _entityMapper;
         private readonly IKeySecretProvider _keySecretProvider;
         private readonly IInstrumentationClient _logger;
@@ -34,10 +35,10 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             IConfigurationProvider configurationProvider,
             IInstrumentationClient logger, IKeySecretProvider keySecretProvider, IApiClient apiClient,
             ICertificateReader certificateReader,
-            IOpenBankingClientProfileRepository clientProfileRepository,
+            IDbEntityRepository<BankClientProfile> clientProfileRepository,
             IDbEntityRepository<SoftwareStatementProfile> softwareStatementProfileRepo,
-            IDomesticConsentRepository domesticConsentRepo,
-            IApiProfileRepository apiProfileRepository)
+            IDbEntityRepository<DomesticConsent> domesticConsentRepo,
+            IDbEntityRepository<ApiProfile> apiProfileRepository)
             : this(new TimeProvider(), entityMapper, baseDbContext, configurationProvider, logger, keySecretProvider, apiClient,
                 certificateReader,
                 clientProfileRepository, softwareStatementProfileRepo, domesticConsentRepo,
@@ -50,10 +51,10 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             IConfigurationProvider configurationProvider,
             IInstrumentationClient logger, IKeySecretProvider keySecretProvider, IApiClient apiClient,
             ICertificateReader certificateReader,
-            IOpenBankingClientProfileRepository clientProfileRepository,
+            IDbEntityRepository<BankClientProfile> clientProfileRepository,
             IDbEntityRepository<SoftwareStatementProfile> softwareStatementProfileRepo,
-            IDomesticConsentRepository domesticConsentRepo,
-            IApiProfileRepository apiProfileRepository)
+            IDbEntityRepository<DomesticConsent> domesticConsentRepo,
+            IDbEntityRepository<ApiProfile> apiProfileRepository)
         {
             _certificateReader = certificateReader.ArgNotNull(nameof(certificateReader));
             _timeProvider = timeProvider.ArgNotNull(nameof(timeProvider));
@@ -91,27 +92,21 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
 
             return new DomesticPaymentConsentContext(context)
             {
-                OpenBankingClientProfileId = openBankingClientProfileId
+                ApiProfileId = openBankingClientProfileId
             };
         }
 
-        public DomesticPaymentContext DomesticPayment(string domesticConsentId)
+        public DomesticPaymentContext DomesticPayment()
         {
-            domesticConsentId.ArgNotNull(nameof(domesticConsentId));
-
             var context = CreateContext();
-
-            return new DomesticPaymentContext(context)
-            {
-                DomesticConsentId = domesticConsentId
-            };
+            return new DomesticPaymentContext(context);
         }
 
-        public AuthorisationCallbackContext AuthorisationCallback()
+        public AuthorisationCallbackDataContext AuthorisationCallbackData()
         {
             var context = CreateContext();
 
-            return new AuthorisationCallbackContext(context);
+            return new AuthorisationCallbackDataContext(context);
         }
 
         public PaymentInitiationApiProfileContext PaymentInitiationApiProfile()
