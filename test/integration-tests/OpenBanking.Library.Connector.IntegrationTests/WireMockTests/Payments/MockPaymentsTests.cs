@@ -4,6 +4,7 @@ using FinnovationLabs.OpenBanking.Library.Connector.Models.Public.PaymentInitiat
 using FluentAssertions;
 using System;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
+using System.Web;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMockTests.Payments
 {
@@ -83,41 +84,44 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMoc
             consentResp.Should().NotBeNull();
             consentResp.Messages.Should().BeEmpty();
             consentResp.Data.Should().NotBeNull();
-            
-            // Check redirect matches above.
-            // Check scope = "openid payments"
-            // Check response type = "code id_token"
-            // Check client ID matches above
-            
-            // Call mock bank with auth URL and check.... then return at least auth code and state....
+
+            var query = HttpUtility.ParseQueryString(new Uri(consentResp.Data.AuthUrl).Query);
+
+            query["redirect_uri"].Should().Be("http://redirecturl.com");
+            query["scope"].Should().Contain("openid payments");
+            query["response_type"].Should().Contain("code id_token");
+            query["client_id"].Should().Be(_mockData.GetClientId());
+            query["request"].Should().NotBeNull();
+            query["nonce"].Should().NotBeNull();
+            query["state"].Should().NotBeNull();
+
+            _mockPaymentsServer.SetUpAuthEndpoint();
 
             // Call Fluent method to pass auth code and state (set up mock bank token endpoint)
             var authCallbackDataResp = requestBuilder.AuthorisationCallbackData()
                 .ResponseMode("fragment")
-                .Response(new AuthorisationCallbackPayload(
-                    "TODO: place code from mock bank here",
-                    "TODO: extract state from consentResp.Data.AuthUrl and place here"
-                )
+                .Response(new AuthorisationCallbackPayload(_mockData.GetAccessToken(), query["state"])
                 {
-                    Nonce = "TODO: extract nonce from consentResp.Data.AuthUrl and place here"
+                    Nonce = query["nonce"]
                 })
                 .SubmitAsync().Result;
 
-            //authCallbackDataResp.Should().NotBeNull();
-            //authCallbackDataResp.Messages.Should().BeEmpty();
-            //authCallbackDataResp.Data.Should().NotBeNull();
-            
+            authCallbackDataResp.Should().NotBeNull();
+            authCallbackDataResp.Messages.Should().BeEmpty();
+            authCallbackDataResp.Data.Should().NotBeNull();
+
+            _mockPaymentsServer.SetUpOBDomesticResponseEndpoint(); 
+
             // Call Fluent method to make payment (set up mock bank payment endpoint)
             var paymentResp = requestBuilder.DomesticPayment()
                 .ConsentId(consentResp.Data.ConsentId)
                 .SubmitAsync().Result;
 
-            //paymentResp.Should().NotBeNull();
-            //paymentResp.Messages.Should().BeEmpty();
-            //paymentResp.Data.Should().NotBeNull();
+            paymentResp.Should().NotBeNull();
+            paymentResp.Messages.Should().BeEmpty();
+            paymentResp.Data.Should().NotBeNull();
 
             // All done!
-
         }
     }
 }
