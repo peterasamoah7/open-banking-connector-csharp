@@ -5,6 +5,7 @@ using FluentAssertions;
 using System;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
 using System.Web;
+using FinnovationLabs.OpenBanking.Library.Connector.Http;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMockTests.Payments
 {
@@ -85,7 +86,7 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMoc
             consentResp.Messages.Should().BeEmpty();
             consentResp.Data.Should().NotBeNull();
 
-            var query = HttpUtility.ParseQueryString(new Uri(consentResp.Data.AuthUrl).Query);
+            var query = HttpUtils.ParseQueryString(new Uri(consentResp.Data.AuthUrl));
 
             query["redirect_uri"].Should().Be("http://redirecturl.com");
             query["scope"].Should().Contain("openid payments");
