@@ -2,6 +2,7 @@
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent.PaymentInitiation;
 using FluentAssertions;
 using System;
+using FinnovationLabs.OpenBanking.Library.Connector.Http;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
 using FinnovationLabs.OpenBanking.Library.Connector.ObModels.PaymentInitiation.Model;
 

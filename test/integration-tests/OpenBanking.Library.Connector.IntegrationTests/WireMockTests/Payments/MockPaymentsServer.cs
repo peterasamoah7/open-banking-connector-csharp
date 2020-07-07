@@ -104,7 +104,7 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMoc
         {
             _server
                 .Given(Request.Create()
-                    .WithPath(MockRoutes.Payments)
+                    .WithPath(MockRoutes.DomesticPayments)
                     .WithHeader("x-fapi-financial-id", "*")
                     .WithHeader("Authorization", "*")
                     .WithHeader("x-idempotency-key", "*")

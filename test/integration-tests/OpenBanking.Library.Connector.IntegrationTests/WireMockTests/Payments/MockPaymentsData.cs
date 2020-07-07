@@ -364,7 +364,7 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMoc
             var creditorAccount = new OBCashAccountCreditor3("IBAN", "BE56456394728288", "ACME DIY", "secondary-identif");
             var domestic2 = new OBDomestic2("instr-identification", "e2e-identification", null, instructedAmount, null, creditorAccount);
             var dataDomesticReponse2 = new OBWriteDataDomesticResponse2("PaymentId", consentId, DateTime.Now, OBTransactionIndividualStatus1Code.Pending, DateTime.Now, null, null, null, domestic2);
-            var links = new ObModels.PaymentInitiation.V3p1p1.Model.Links($"{MockRoutes.Url}/{MockRoutes.Payments}");
+            var links = new ObModels.PaymentInitiation.V3p1p1.Model.Links($"{MockRoutes.Url}/{MockRoutes.DomesticPayments}");
             var meta = new ObModels.PaymentInitiation.V3p1p1.Model.Meta(1);
 
             var model = new OBWriteDomesticResponse2(dataDomesticReponse2, links, meta);
