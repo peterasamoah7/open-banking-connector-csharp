@@ -4,11 +4,13 @@
 
 using System;
 using FinnovationLabs.OpenBanking.Library.Connector.Json;
+using FinnovationLabs.OpenBanking.Library.Connector.Models.Mapping;
+using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent;
 using Newtonsoft.Json;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Public
 {
-    [PersistenceEquivalent(typeof(Persistent.BankClientRegistrationClaims))]
+    [PersistenceEquivalent(typeof(BankClientRegistrationClaims))]
     public class OpenBankingClientRegistrationClaims
     {
         [JsonProperty("iss")]
@@ -56,9 +58,8 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Public
         [JsonProperty("request_object_signing_alg")]
         public string RequestObjectSigningAlg { get; set; } = "PS256";
 
-        // TODO: should normally collapse to single string when JSON serialising
         [JsonProperty("scope")]
-        public string[] Scope { get; set; }
+        public string Scope { get; set; }
 
         [JsonProperty("software_id")]
         public string SoftwareId { get; set; }

@@ -10,12 +10,12 @@ using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Running;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Mapping;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
-using FinnovationLabs.OpenBanking.Library.Connector.Models.Public.PaymentInitiation;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public.Request;
+using FinnovationLabs.OpenBanking.Library.Connector.ObModels.PaymentInitiation.Model;
 using FinnovationLabs.OpenBanking.Library.Connector.ObModels.PaymentInitiation.V3p1p1.Model;
 using McMaster.Extensions.CommandLineUtils;
 using OBAddressTypeCode =
-    FinnovationLabs.OpenBanking.Library.Connector.Models.Public.PaymentInitiation.OBAddressTypeCode;
+    FinnovationLabs.OpenBanking.Library.Connector.ObModels.PaymentInitiation.Model.OBAddressTypeCode;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.Benchmarks
 {
@@ -97,9 +97,9 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Benchmarks
             {
                 TownName = "Accrington Stanley",
                 Country = "UK",
-                AddressLine = Enumerable.Range(1, 3).Select(i => i.ToString()).ToList(),
+                AddressLine = Enumerable.Range(start: 1, count: 3).Select(i => i.ToString()).ToList(),
                 BuildingNumber = "building number",
-                CountrySubDivision = Enumerable.Range(10, 3).Select(i => i.ToString()).ToList(),
+                CountrySubDivision = Enumerable.Range(start: 10, count: 3).Select(i => i.ToString()).ToList(),
                 PostCode = "post code",
                 StreetName = "street name"
             },
@@ -185,11 +185,11 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Benchmarks
             },
             BankClientRegistrationDataOverrides = new BankClientRegistrationDataOverrides
             {
-                GrantTypes = Enumerable.Range(1, 10).Select(i => i.ToString()).ToList()
+                GrantTypes = Enumerable.Range(start: 1, count: 10).Select(i => i.ToString()).ToList()
             },
             BankClientRegistrationClaimsOverrides = new BankClientRegistrationClaimsOverrides
             {
-                GrantTypes = Enumerable.Range(1, 10).Select(i => i.ToString()).ToList(),
+                GrantTypes = Enumerable.Range(start: 1, count: 10).Select(i => i.ToString()).ToList(),
                 RequestAudience = "audience",
                 ScopeUseStringArray = false,
                 SsaIssuer = "issuer",
@@ -207,10 +207,10 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Benchmarks
         private SoftwareStatementProfile CreateSoftwareStatement() => new SoftwareStatementProfile
         {
             DefaultFragmentRedirectUrl = "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
-            SigningKeySecretName = "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n",
+            SigningKey = "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n",
             SigningKeyId = "b",
             SigningCertificate = "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n",
-            TransportKeySecretName = "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n",
+            TransportKey = "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n",
             TransportCertificate = "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n",
             SoftwareStatement =
                 "e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30=.e30="

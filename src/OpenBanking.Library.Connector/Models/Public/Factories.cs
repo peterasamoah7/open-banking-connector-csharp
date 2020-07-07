@@ -3,25 +3,31 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using FinnovationLabs.OpenBanking.Library.Connector.Extensions;
+using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Public
 {
     internal static class Factories
     {
-        public static OpenBankingClientRegistrationClaims CreateRegistrationClaims(string issuerUrl,
-            Persistent.SoftwareStatementProfile sProfile, bool concatScopes)
+        public static OpenBankingClientRegistrationClaims CreateRegistrationClaims(
+            string issuerUrl,
+            SoftwareStatementProfile sProfile,
+            bool concatScopes)
         {
             sProfile.ArgNotNull(nameof(sProfile));
 
-            var registrationClaims = new OpenBankingClientRegistrationClaims
+            OpenBankingClientRegistrationClaims registrationClaims = new OpenBankingClientRegistrationClaims
             {
                 Iss = sProfile.SoftwareStatementPayload.SoftwareId,
                 Aud = issuerUrl,
                 RedirectUris = sProfile.SoftwareStatementPayload.SoftwareRedirectUris,
                 SoftwareId = sProfile.SoftwareStatementPayload.SoftwareId,
-                Scope = concatScopes
-                    ? new[] { sProfile.SoftwareStatementPayload.Scope }
-                    : sProfile.SoftwareStatementPayload.Scope.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+                Scope = sProfile.SoftwareStatementPayload.Scope,
+                /*                Scope = concatScopes
+                                    ? new[] { sProfile.SoftwareStatementPayload.Scope }
+                                    : sProfile.SoftwareStatementPayload.Scope.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+                */
                 SoftwareStatement = sProfile.SoftwareStatement,
                 TlsClientAuthSubjectDn =
                     $"CN={sProfile.SoftwareStatementPayload.SoftwareId},OU={sProfile.SoftwareStatementPayload.OrgId},O=OpenBanking,C=GB"
@@ -31,10 +37,12 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Public
         }
 
         public static OAuth2RequestObjectClaims CreateOAuth2RequestObjectClaims(
-            Persistent.BankClientProfile openBankingClient, string redirectUrl, string[] scope,
+            BankClientProfile openBankingClient,
+            string redirectUrl,
+            string[] scope,
             string intentId)
         {
-            var oAuth2RequestObjectClaims = new OAuth2RequestObjectClaims
+            OAuth2RequestObjectClaims oAuth2RequestObjectClaims = new OAuth2RequestObjectClaims
             {
                 Iss = openBankingClient.BankClientRegistrationData.ClientId,
                 Aud = openBankingClient.IssuerUrl,

@@ -8,37 +8,42 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using FinnovationLabs.OpenBanking.Library.Connector.Extensions;
 using FinnovationLabs.OpenBanking.Library.Connector.Http;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Mapping;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Persistent.PaymentInitiation;
+using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
 using FinnovationLabs.OpenBanking.Library.Connector.Persistence;
+using FinnovationLabs.OpenBanking.Library.Connector.Services;
 using AuthorisationCallbackDataPublic =
     FinnovationLabs.OpenBanking.Library.Connector.Models.Public.Request.AuthorisationCallbackData;
-using TokenEndpointResponsePublic = FinnovationLabs.OpenBanking.Library.Connector.Models.Public.TokenEndpointResponse;
 
 namespace FinnovationLabs.OpenBanking.Library.Connector.Operations
 {
     public class RedirectCallbackHandler
     {
         private readonly IApiClient _apiClient;
+        private readonly IDbMultiEntityMethods _dbContextService;
         private readonly IDbEntityRepository<DomesticConsent> _domesticConsentRepo;
         private readonly IEntityMapper _mapper;
         private readonly IDbEntityRepository<BankClientProfile> _openBankingClientRepo;
-        private readonly IDbEntityRepository<SoftwareStatementProfile> _softwareStatementProfileRepo;
+        private readonly ISoftwareStatementProfileService _softwareStatementProfileService;
 
         public RedirectCallbackHandler(
-            IDbEntityRepository<SoftwareStatementProfile> softwareStatementProfileRepo,
-            IApiClient apiClient, IEntityMapper mapper,
+            IApiClient apiClient,
+            IEntityMapper mapper,
             IDbEntityRepository<BankClientProfile> openBankingClientRepo,
-            IDbEntityRepository<DomesticConsent> domesticConsentRepo)
+            IDbEntityRepository<DomesticConsent> domesticConsentRepo,
+            ISoftwareStatementProfileService softwareStatementProfileService,
+            IDbMultiEntityMethods dbMultiEntityMethods)
         {
-            _softwareStatementProfileRepo =
-                softwareStatementProfileRepo.ArgNotNull(nameof(softwareStatementProfileRepo));
             _apiClient = apiClient.ArgNotNull(nameof(apiClient));
             _mapper = mapper.ArgNotNull(nameof(mapper));
             _openBankingClientRepo = openBankingClientRepo.ArgNotNull(nameof(openBankingClientRepo));
             _domesticConsentRepo = domesticConsentRepo.ArgNotNull(nameof(domesticConsentRepo));
+            _softwareStatementProfileService = softwareStatementProfileService;
+            _dbContextService = dbMultiEntityMethods;
         }
 
         public async Task CreateAsync(AuthorisationCallbackDataPublic redirectData)
@@ -58,28 +63,28 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Operations
             BankClientProfile clientProfile = await _openBankingClientRepo.GetAsync(consent.ApiProfileId);
             if (clientProfile == null)
             {
-                throw new KeyNotFoundException(
-                    $"Client profile with ID '{consent.ApiProfileId}' not found.");
+                throw new KeyNotFoundException($"Client profile with ID '{consent.ApiProfileId}' not found.");
             }
 
             SoftwareStatementProfile softwareStatementProfile =
-                await _softwareStatementProfileRepo.GetAsync(clientProfile.SoftwareStatementProfileId) ??
-                throw new KeyNotFoundException("The Software statement does not exist.");
-
+                _softwareStatementProfileService.GetSoftwareStatementProfile(clientProfile.SoftwareStatementProfileId);
 
             // Obtain token for consent
             string redirectUrl = softwareStatementProfile.DefaultFragmentRedirectUrl;
-            TokenEndpointResponsePublic tokenEndpointResponse =
-                await PostAuthCodeGrant(redirectData.Response.AuthorisationCode, redirectUrl, clientProfile);
+            TokenEndpointResponse tokenEndpointResponse =
+                await PostAuthCodeGrant(
+                    authCode: redirectData.Response.Code,
+                    redirectUrl: redirectUrl,
+                    client: clientProfile);
 
             // Update consent with token
-            TokenEndpointResponse value =
-                _mapper.Map<TokenEndpointResponse>(tokenEndpointResponse);
-            consent.TokenEndpointResponse = value;
-            await _domesticConsentRepo.UpsertAsync(consent);
+            consent.TokenEndpointResponse = tokenEndpointResponse;
+            await _dbContextService.SaveChangesAsync();
         }
 
-        private async Task<TokenEndpointResponsePublic> PostAuthCodeGrant(string authCode, string redirectUrl,
+        private async Task<TokenEndpointResponse> PostAuthCodeGrant(
+            string authCode,
+            string redirectUrl,
             BankClientProfile client)
         {
             UriBuilder ub = new UriBuilder(new Uri(client.OpenIdConfiguration.TokenEndpoint));
@@ -99,8 +104,7 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Operations
             else if (client.BankClientRegistrationClaims.TokenEndpointAuthMethod ==
                      "client_secret_basic")
             {
-                client.BankClientRegistrationData.ClientSecret.ArgNotNull(
-                    "No client secret available.");
+                client.BankClientRegistrationData.ClientSecret.ArgNotNull("No client secret available.");
                 string authString = client.BankClientRegistrationData.ClientId + ":" +
                                     client.BankClientRegistrationData.ClientSecret;
                 byte[] plainTextBytes = Encoding.UTF8.GetBytes(authString);
@@ -119,25 +123,23 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Operations
             // Assemble headers
             List<HttpHeader> headers = new List<HttpHeader>
             {
-                new HttpHeader("x-fapi-financial-id", client.XFapiFinancialId)
+                new HttpHeader(name: "x-fapi-financial-id", value: client.XFapiFinancialId)
             };
             if (authHeader != null)
             {
-                headers.Add(new HttpHeader("Authorization", authHeader));
+                headers.Add(new HttpHeader(name: "Authorization", value: authHeader));
             }
 
-            Models.Ob.TokenEndpointResponse resp = await new HttpRequestBuilder()
+            TokenEndpointResponse resp = await new HttpRequestBuilder()
                 .SetMethod(HttpMethod.Post)
                 .SetUri(ub.Uri)
                 .SetHeaders(headers)
                 .SetContentType("application/x-www-form-urlencoded")
                 .SetContent(content)
                 .Create()
-                .RequestJsonAsync<Models.Ob.TokenEndpointResponse>(_apiClient, false);
+                .RequestJsonAsync<TokenEndpointResponse>(client: _apiClient, requestContentIsJson: false);
 
-            TokenEndpointResponsePublic result = _mapper.Map<TokenEndpointResponsePublic>(resp);
-
-            return result;
+            return resp;
         }
     }
 }

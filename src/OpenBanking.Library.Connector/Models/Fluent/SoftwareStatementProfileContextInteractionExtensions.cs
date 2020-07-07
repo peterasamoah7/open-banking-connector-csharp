@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FinnovationLabs.OpenBanking.Library.Connector.Models.Public;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public.Request;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Public.Response;
 using FinnovationLabs.OpenBanking.Library.Connector.Models.Validation;
@@ -16,9 +15,10 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
     public static class SoftwareStatementProfileContextInteractionExtensions
     {
         private static readonly Lens<SoftwareStatementProfileContext, SoftwareStatementProfile> DataLens =
-            Lens.Create((SoftwareStatementProfileContext c) => c.Data, (c, d) => c.Data = d);
+            Lens.Create(get: (SoftwareStatementProfileContext c) => c.Data, set: (c, d) => c.Data = d);
 
-        public static SoftwareStatementProfileContext Data(this SoftwareStatementProfileContext context,
+        public static SoftwareStatementProfileContext Data(
+            this SoftwareStatementProfileContext context,
             SoftwareStatementProfile value)
         {
             context.ArgNotNull(nameof(context));
@@ -39,7 +39,8 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             return context;
         }
 
-        public static SoftwareStatementProfileContext SoftwareStatement(this SoftwareStatementProfileContext context,
+        public static SoftwareStatementProfileContext SoftwareStatement(
+            this SoftwareStatementProfileContext context,
             string statement)
         {
             context.ArgNotNull(nameof(context))
@@ -48,36 +49,37 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             return context;
         }
 
-        public static SoftwareStatementProfileContext SigningKeyInfo(this SoftwareStatementProfileContext context,
+        public static SoftwareStatementProfileContext SigningKeyInfo(
+            this SoftwareStatementProfileContext context,
             string keyId,
             string keySecretName,
-            string certificate
-            )
+            string certificate)
         {
             SoftwareStatementProfile data = context.ArgNotNull(nameof(context)).GetOrCreateDefault(DataLens);
 
             data.SigningKeyId = keyId;
-            data.SigningKeySecretName = keySecretName;
+            data.SigningKey = keySecretName;
             data.SigningCertificate = certificate;
 
             return context;
         }
 
-        public static SoftwareStatementProfileContext TransportKeyInfo(this SoftwareStatementProfileContext context,
+        public static SoftwareStatementProfileContext TransportKeyInfo(
+            this SoftwareStatementProfileContext context,
             string keySecretName,
-            string certificate
-        )
+            string certificate)
         {
             SoftwareStatementProfile data = context.ArgNotNull(nameof(context)).GetOrCreateDefault(DataLens);
 
-            data.TransportKeySecretName = keySecretName;
+            data.TransportKey = keySecretName;
             data.TransportCertificate = certificate;
 
             return context;
         }
 
         public static SoftwareStatementProfileContext DefaultFragmentRedirectUrl(
-            this SoftwareStatementProfileContext context, string url)
+            this SoftwareStatementProfileContext context,
+            string url)
         {
             context.ArgNotNull(nameof(context))
                 .GetOrCreateDefault(DataLens).DefaultFragmentRedirectUrl = url;
@@ -93,14 +95,11 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             IList<FluentResponseMessage> validationErrors = Validate(context);
             if (validationErrors.Count > 0)
             {
-                return new OpenBankingSoftwareStatementResponse(validationErrors, null);
+                return new OpenBankingSoftwareStatementResponse(messages: validationErrors, data: null);
             }
 
             CreateSoftwareStatementProfile creator = new CreateSoftwareStatementProfile(
-                context.Context.EntityMapper,
-                context.Context.DbContextService,
-                context.Context.SoftwareStatementRepository
-                );
+                softwareStatementProfileService: context.Context.SoftwareStatementProfileService);
 
             List<FluentResponseMessage> messages = new List<FluentResponseMessage>();
 
@@ -108,13 +107,13 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.Models.Fluent
             {
                 SoftwareStatementProfileResponse response = await creator.CreateAsync(context.Data);
 
-                return new OpenBankingSoftwareStatementResponse(messages, response);
+                return new OpenBankingSoftwareStatementResponse(messages: messages, data: response);
             }
             catch (Exception ex)
             {
                 context.Context.Instrumentation.Exception(ex);
 
-                return new OpenBankingSoftwareStatementResponse(ex.CreateErrorMessage(), null);
+                return new OpenBankingSoftwareStatementResponse(message: ex.CreateErrorMessage(), data: null);
             }
         }
 
