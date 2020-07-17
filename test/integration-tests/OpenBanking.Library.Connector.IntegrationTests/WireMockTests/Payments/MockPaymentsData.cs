@@ -362,14 +362,14 @@ namespace FinnovationLabs.OpenBanking.Library.Connector.IntegrationTests.WireMoc
         {
             var consentId = Guid.NewGuid().ToString();
 
-            var instructedAmount = new OBInternational2InstructedAmount("50", "GBP");
-            var creditorAccount = new OBCashAccountCreditor3("IBAN", "BE56456394728288", "ACME DIY", "secondary-identif");
-            var domestic2 = new OBDomestic2("instr-identification", "e2e-identification", null, instructedAmount, null, creditorAccount);
-            var dataDomesticReponse2 = new OBWriteDataDomesticResponse2("PaymentId", consentId, DateTime.Now, OBTransactionIndividualStatus1Code.Pending, DateTime.Now, null, null, null, domestic2);
-            var links = new ObModels.PaymentInitiation.V3p1p1.Model.Links($"{MockRoutes.Url}/{MockRoutes.DomesticPayments}");
-            var meta = new ObModels.PaymentInitiation.V3p1p1.Model.Meta(1);
+            var instructedAmount = new OBWriteDomestic2DataInitiationInstructedAmount("50", "GBP");
+            var creditorAccount = new OBWriteDomestic2DataInitiationCreditorAccount("IBAN", "BE56456394728288", "ACME DIY", "secondary-identif");
+            var domestic2 = new OBWriteDomestic2DataInitiation("instr-identification", "e2e-identification", null, instructedAmount, null, creditorAccount);
+            var dataDomesticReponse2 = new OBWriteDomesticResponse4Data("PaymentId", consentId, DateTime.Now, OBWriteDomesticResponse4Data.StatusEnum.Pending, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, domestic2);
+            var links = new Links($"{MockRoutes.Url}/{MockRoutes.DomesticPayments}");
+            var meta = new Meta(1);
 
-            var model = new OBWriteDomesticResponse2(dataDomesticReponse2, links, meta);
+            var model = new OBWriteDomesticResponse4(dataDomesticReponse2, links, meta);
 
             return JsonConvert.SerializeObject(model);
         }
